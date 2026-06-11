@@ -1,0 +1,109 @@
+{
+  "Sessão de ferramenta": {
+    "prefix": "!sessao",
+    "scope": "markdown",
+    "description": "Cabeçalho de sessão — escolha ferramenta e fase no dropdown",
+    "body": [
+      "# Sessão — ${1|Cartografo,Arquiteto,Forja,Restaurador,Garimpeiro|}",
+      "**Fase:** ${2|Fase 1,Fase 2,Fase 3|}  ·  **Modo:** ${3:padrão}",
+      "",
+      "## Entrada",
+      "$4",
+      "",
+      "## Saída",
+      "",
+      "---",
+      "_Abra o manual da ferramenta ao lado (ESTADO.md → tabela das 5) para seguir o processo._"
+    ]
+  },
+
+  "Fase 1 — contexto": {
+    "prefix": "!fase1",
+    "scope": "markdown",
+    "description": "Bloco de contexto da Fase 1 (Fundação & Pertencimento)",
+    "body": [
+      "> **Fase 1 — Fundação & Pertencimento** · topo puro",
+      "> Objetivo: provar que a ODuo é de dentro e útil; plantar autoridade e língua do canteiro.",
+      "> Editorias: Gestão · O Mercado · Institucional (leve) — Formatos: Carrossel · Reels (reframe)",
+      "> KPI: alcance de não-seguidores · salvamentos · visitas ao perfil — Mix: ~70/20/10"
+    ]
+  },
+
+  "Fase 2 — contexto": {
+    "prefix": "!fase2",
+    "scope": "markdown",
+    "description": "Bloco de contexto da Fase 2 (Expansão de Topo)",
+    "body": [
+      "> **Fase 2 — Expansão de Topo** · escalar alcance",
+      "> Objetivo: crescer a base qualificada; é aqui que o topo de fato se expande.",
+      "> Editorias: O Mercado · Gestão · Vendas · Tecnologia (educacional) — Formatos: Reels (+cortes) · Carrossel · colaborações",
+      "> KPI: seguidores qualificados · compartilhamentos · custo/MQL passa a contar — Mix: ~70/20/10"
+    ]
+  },
+
+  "Fase 3 — contexto": {
+    "prefix": "!fase3",
+    "scope": "markdown",
+    "description": "Bloco de contexto da Fase 3 (Nutrição & Conversão)",
+    "body": [
+      "> **Fase 3 — Nutrição & Conversão** · converter sem largar o topo",
+      "> Objetivo: transformar audiência em conversas de Diagnóstico, mantendo ~70% no topo.",
+      "> Editorias: + Institucional/Provas · + Produto/Oferta (dose pequena) — Formatos: + Stories com CTA · vídeo de prova · Live",
+      "> KPI: conversas iniciadas (WhatsApp/Diagnóstico) · custo/MQL — sem derrubar o % de topo"
+    ]
+  },
+
+  "Contrato 1 — Plano": {
+    "prefix": "!contrato1",
+    "scope": "markdown",
+    "description": "Molde do Contrato 1 (plano do Cartógrafo)",
+    "body": [
+      "CONTRATO 1 — PLANO · Modo: ${1|pontual,mensal,trimestral|} · Status: Em aprovação",
+      "",
+      "- **Foco:** $2",
+      "- **Fase:** ${3|Fase 1,Fase 2,Fase 3|}",
+      "- **Eixos (→ Pilares):** $4",
+      "- **KPI:** $5",
+      "- **Marcos:** $6",
+      "- **Proporção de formato:** $7",
+      "- **Léxico de campanha:** $8"
+    ]
+  },
+
+  "Contrato 2 — Calendário/Sequência": {
+    "prefix": "!contrato2",
+    "scope": "markdown",
+    "description": "Molde do Contrato 2 (grade do Arquiteto)",
+    "body": [
+      "CONTRATO 2 — ${1|CALENDÁRIO,SEQUÊNCIA|} · Mês/Eixo: $2 · Fase: ${3|Fase 1,Fase 2,Fase 3|} · Status: Em produção",
+      "",
+      "| Dia | Formato | Canal | Título (provisório) | Resumo | Editoria | Funil | Pilar | Ângulo |",
+      "|-----|---------|-------|---------------------|--------|----------|-------|-------|--------|",
+      "| $4  |         |       |                     |        |          | TOPO  |       |        |",
+      "",
+      "_Rodapé: distribuição final (% topo/meio/fundo · por editoria · por ângulo) + pendências \"a verificar\"._"
+    ]
+  },
+
+  "Contrato 3 — Post": {
+    "prefix": "!contrato3",
+    "scope": "markdown",
+    "description": "Molde do Contrato 3 (post da Forja)",
+    "body": [
+      "CONTRATO 3 — POST · Formato: ${1|Carrossel,Estático,Reels,Story,Blog|} · Canal: $2 · Pilar: $3",
+      "**Gancho:** ${4|Confronto,Aula,História|}  ·  **Modulação:** ${5|Sábio,Criador|}",
+      "",
+      "### Texto na imagem / roteiro",
+      "$6",
+      "",
+      "### Legenda (Instagram)",
+      "",
+      "### Legenda (LinkedIn)",
+      "",
+      "### Hashtags",
+      "",
+      "### Self-check (12 itens) · Fontes (URL) · Guardião de marca",
+      "- [ ] Sem blacklist · Pilar claro · língua do canteiro · prova com fonte"
+    ]
+  }
+}

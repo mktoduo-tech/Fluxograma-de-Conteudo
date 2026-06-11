@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ODuo Studio</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root{
+    --amber:#E8821E; --bone:#EFE9DD; --graphite:#17150f; --panel:#211e17;
+    --panel2:#2b2820; --line:#3c3830; --muted:#9b9483; --green:#5fae6a; --red:#d9663f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--graphite); color:var(--bone); font-family:"Segoe UI",system-ui,sans-serif; display:flex; flex-direction:column; height:100vh;}
+  header{display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .brand{font-weight:700; letter-spacing:.5px; font-size:18px}
+  .brand b{color:var(--amber)}
+  select, button, input{background:var(--panel2); color:var(--bone); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font-size:13px; font-family:inherit;}
+  select:focus,input:focus{outline:1px solid var(--amber)}
+  label.field{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+  button{cursor:pointer; transition:.15s}
+  button:hover{border-color:var(--amber)}
+  button.primary{background:var(--amber); color:#1a160d; border-color:var(--amber); font-weight:700}
+  button.primary:disabled{opacity:.5; cursor:not-allowed}
+  .spacer{flex:1}
+  .sub{font-size:12px; color:var(--muted); padding:6px 16px; background:var(--panel); border-bottom:1px solid var(--line)}
+  .sub b{color:var(--bone)}
+  main{flex:1; display:flex; min-height:0}
+  .pane{flex:1; display:flex; flex-direction:column; min-width:0}
+  .pane + .pane{border-left:1px solid var(--line)}
+  .pane h2{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px;}
+  .pane h2 .tag{color:var(--amber)}
+  textarea{flex:1; resize:none; background:var(--graphite); color:var(--bone); border:0; outline:0; padding:16px; font-family:"Cascadia Code",Consolas,monospace; font-size:14px; line-height:1.6;}
+  .out{flex:1; overflow:auto; padding:8px 22px 40px}
+  .out h1,.out h2,.out h3{color:var(--bone); border-bottom:1px solid var(--line); padding-bottom:4px}
+  .out h1{font-size:22px} .out h2{font-size:18px} .out h3{font-size:15px}
+  .out a{color:var(--amber)}
+  .out code{background:var(--panel2); padding:2px 5px; border-radius:4px; font-size:13px}
+  .out pre{background:var(--panel2); padding:12px; border-radius:8px; overflow:auto}
+  .out table{border-collapse:collapse; width:100%; font-size:13px}
+  .out th,.out td{border:1px solid var(--line); padding:6px 8px; text-align:left}
+  .out th{background:var(--panel)}
+  .out blockquote{border-left:3px solid var(--amber); margin:10px 0; padding:4px 14px; color:var(--muted)}
+  .barbtns{display:flex; gap:8px; padding:8px 14px; border-top:1px solid var(--line); background:var(--panel)}
+  .placeholder{color:var(--muted); padding:40px 22px; font-style:italic}
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:10}
+  .modal{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; width:min(480px,92vw)}
+  .modal h3{margin:0 0 4px} .modal p{color:var(--muted); font-size:13px; margin:0 0 14px}
+  .modal label{font-size:12px; color:var(--muted); display:block; margin-bottom:4px}
+  .modal input{width:100%; margin-bottom:12px}
+  .row{display:flex; gap:8px; align-items:center}
+  .status{font-size:12px; color:var(--muted)}
+  .status.err{color:var(--red)} .status.ok{color:var(--green)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;margin-right:6px}
+  .dot.ok{background:var(--green)}
+  #model{width:190px}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">ODuo <b>Studio</b></span>
+  <label class="field">Fase
+    <select id="phase">
+      <option value="1">Fase 1 — Fundação</option>
+      <option value="2">Fase 2 — Expansão</option>
+      <option value="3">Fase 3 — Conversão</option>
+    </select>
+  </label>
+  <label class="field">Ferramenta
+    <select id="tool">
+      <option value="cartografo">Cartógrafo · plano</option>
+      <option value="arquiteto">Arquiteto · calendário</option>
+      <option value="forja" selected>Forja · post</option>
+      <option value="restaurador">Restaurador · legenda</option>
+      <option value="garimpeiro">Garimpeiro · ângulos</option>
+    </select>
+  </label>
+  <label class="field">Provedor
+    <select id="provider">
+      <option value="anthropic">Anthropic · Claude</option>
+      <option value="openai">OpenAI · GPT</option>
+      <option value="google">Google · Gemini</option>
+      <option value="compativel">Compatível · OpenRouter/local</option>
+    </select>
+  </label>
+  <label class="field">Modelo
+    <input id="model" list="modellist" autocomplete="off" spellcheck="false">
+    <datalist id="modellist"></datalist>
+  </label>
+  <div class="spacer"></div>
+  <span class="status" id="keystatus"><span class="dot" id="keydot"></span><span id="keytext">sem chave</span></span>
+  <button id="settingsBtn">⚙ Config</button>
+</header>
+
+<div class="sub" id="focusBar"></div>
+
+<main>
+  <section class="pane">
+    <h2>Prompt <span class="tag" id="toolLabelL">· Forja</span></h2>
+    <textarea id="prompt" placeholder="Escreva aqui em markdown.
+
+Ex. (Forja):
+Reels · Instagram · Gestão
+&quot;3 sinais de que sua frota está parada demais&quot;
+Resumo: alertar o dono sobre ociosidade silenciosa."></textarea>
+    <div class="barbtns">
+      <button class="primary" id="genBtn">Gerar ▶ <span style="opacity:.7">(Ctrl+Enter)</span></button>
+      <span class="spacer"></span>
+      <span class="status" id="counter">0 caracteres</span>
+    </div>
+  </section>
+
+  <section class="pane">
+    <h2>Resposta <span class="tag" id="toolLabelR">· Contrato 3</span></h2>
+    <div class="out" id="output"><div class="placeholder">A resposta formatada aparece aqui.</div></div>
+    <div class="barbtns">
+      <button id="copyBtn">Copiar</button>
+      <button id="saveBtn">Salvar .md</button>
+      <span class="spacer"></span>
+      <span class="status" id="genstatus"></span>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Chave da API</h3>
+    <p id="keyhint"></p>
+    <label>Chave</label>
+    <input type="password" id="apikey" placeholder="cole a chave aqui">
+    <div id="baseRow" style="display:none">
+      <label>Base URL (endpoint compatível com OpenAI)</label>
+      <input type="text" id="baseurl" placeholder="https://openrouter.ai/api/v1">
+    </div>
+    <div class="row">
+      <button class="primary" id="saveKey">Salvar</button>
+      <button id="closeModal">Fechar</button>
+      <span class="spacer"></span>
+      <button id="clearKey" style="color:var(--red)">Apagar chave</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================ DIRETRIZES EMBUTIDAS (o cérebro) ============================ */
+const BRAND = `RÉGUA DE MARCA ODuo (vale para TODA peça):
+- Tom "ombro a ombro": fale COM o dono de locadora, não PARA ele. Sério, casual no trato, entusiasmo medido, sempre com pé no dado.
+- Público "Seu Antônio": dono de locadora 45–60, feito do zero, CÉTICO por cicatriz, vive no WhatsApp, decide pelo que vê e pela indicação de par. Dor-mãe: FROTA PARADA. Métrica que importa: ocupação da frota.
+- 3 Pilares (toda peça sustenta UM): 1) Só locadoras; 2) Da ponta a ponta (máquina comercial, do anúncio ao fechamento); 3) Resultado com previsibilidade.
+- Provas verificáveis (as únicas que pode citar): CLM 18%→36,5% (+R$300k em locações); FL R$50k→R$108k/mês; benchmark United Rentals. NÚMERO SÓ COM FONTE. NUNCA invente número.
+- Léxico SIM: contato (não "orçamento"), máquina comercial, fechamento, previsibilidade, diagnóstico, ombro a ombro. Língua do canteiro: caçamba, betoneira, plataforma elevatória, cesto aéreo, andaime, container, gerador, diária, frota, pátio, ocupação, locação.
+- BLACKLIST (inviolável, nunca use): solução inovadora, transformação digital, disruptivo, potencialize, próximo nível, alavancar, sinergia, mindset, ecossistema (vago), imperdível, revolucionário, incrível, exclusivo, "melhor do Brasil", "orçamento", "sem mexer no marketing", corporativês (360º/holístico), número inventado.
+- Regras duras: trate por "você"/"a gente"/"nós" (nunca "tu"/"senhor"); sempre "a ODuo"; no máximo 1 exclamação por peça; ZERO emoji em texto escrito; varie o tamanho das frases (curtas carregam o peso).
+- Humanização da legenda: 3–6 parágrafos, o último é a CTA; abra com uma afirmação surpreendente/contraditória; conte história real (não número solto); ritmo irregular; leia em voz alta — se soar corporativo, reescreva. Hashtags vêm depois (SEO-first, sobre a empresa/setor, não sobre o post).
+- Modulação: Sábio OU Criador na mesma peça — NUNCA os dois.
+- Camada 7 (bloqueia e pede revisão humana): número/case sem fonte; promessa de resultado; nome real de cliente (LGPD); crise ou concorrente nominal. Nesses casos, sinalize e pergunte.`;
+
+const PHASES = {
+  "1": `FASE ATIVA = 1 — Fundação & Pertencimento (TOPO PURO).
+Editorias dominantes: Gestão, O Mercado, Institucional (leve). Formatos-chave: Carrossel, Reels (reframe).
+KPI: alcance de não-seguidores, salvamentos, visitas ao perfil. CTA FRIO — nada de oferta dura. Mix ~70/20/10. Objetivo: provar que a ODuo é de dentro e útil.`,
+  "2": `FASE ATIVA = 2 — Expansão de Topo.
+Editorias: O Mercado, Gestão, Vendas, Tecnologia (educacional). Formatos: Reels (+cortes do fundador), Carrossel, colaborações.
+KPI: seguidores qualificados, compartilhamentos, custo/MQL começa a contar. CTA MORNO. Objetivo: escalar alcance e crescer a base certa.`,
+  "3": `FASE ATIVA = 3 — Nutrição & Conversão.
+Acrescenta Institucional/Provas e Produto/Oferta (dose pequena). Formatos: + Stories com CTA, vídeo de prova, Live.
+KPI: conversas iniciadas (WhatsApp/Diagnóstico). CTA QUENTE (Diagnóstico gratuito de 45 min). Mantenha ~70% do volume ainda no topo.`
+};
+
+const TOOLS = {
+  cartografo:{ out:"Contrato 1 · Plano",
+    sys:`VOCÊ É O CARTÓGRAFO (Estrategista). Transforma brainstorm cru em um PLANO aprovável. Não escreve calendário nem post — pare no plano.
+Primeiro confirme o Modo (pontual/mensal/trimestral) e o que falta de contexto: PERGUNTE, não invente.
+Saída: um MENU de 3 planos mutuamente exclusivos (Conservador / Equilibrado / Agressivo), cada um com tese, eixos (mapeados a Pilares), formatos, cadência, riscos, impacto, esforço — e feche com UMA recomendação. Todo dado de mercado precisa de fonte com URL; sem fonte, marque "a verificar". O Norte/fase rege o mix.`},
+  arquiteto:{ out:"Contrato 2 · Calendário/Sequência",
+    sys:`VOCÊ É O ARQUITETO (Planejador). Transforma o plano aprovado em CALENDÁRIO do mês ou SEQUÊNCIA temática. Não escreve legenda — pare no calendário.
+Confirme o Modo (calendário ou sequência). Saída: uma TABELA markdown com colunas | Dia | Formato | Canal | Título (provisório) | Resumo | Editoria | Funil | Pilar | Ângulo |, seguida de um rodapé com a distribuição (% topo/meio/fundo, contagem por editoria, por ângulo) e pendências "a verificar".
+Regras: mix ~70/20/10; cruze editoria×formato SEM repetir o mesmo par em sequência; distribua os ângulos (Confronto/Aula/História); cada linha mapeia a um Pilar.`},
+  forja:{ out:"Contrato 3 · Post",
+    sys:`VOCÊ É A FORJA (Redator + QA embutido). Transforma UMA linha do calendário em POST pronto.
+Processo: classifique o gancho (Confronto/Aula/História); defina a modulação (Sábio OU Criador); ramifique por formato (Carrossel: 5–10 telas, ≤30 palavras/tela, anatomia gancho→tensão→desenvolvimento→recompensa→CTA; Estático: 1 arte + legenda; Reels/Story: roteiro com gancho nos 2s, Murilo como âncora; Blog: mais longo).
+Saída (markdown): "Texto na imagem / roteiro" + "Legenda (Instagram)" + "Legenda (LinkedIn)" + "Hashtags". Depois rode o QA: checklist de blacklist, Pilar sustentado, prova com fonte, humanização. Se faltar dado/fonte, marque "a verificar" e PERGUNTE antes de finalizar.`},
+  restaurador:{ out:"Legenda restaurada",
+    sys:`VOCÊ É O RESTAURADOR. Pega uma legenda existente e a transforma. Confirme o Nível: 1 Variações (3–5 reescritas, sem mudar fatos) / 2 Reescrita (novo gancho + gatilhos + ritmo + CTA) / 3 Reconstrução (conteúdo aprofundado com pesquisa e dados COM URL).
+Faça primeiro um diagnóstico rápido (gancho? gatilho? CTA? prova? blacklist?) e então entregue a(s) versão(ões). No Nível 3, dado só com fonte; sem fonte, "a verificar". Nunca misture Sábio e Criador na mesma versão.`},
+  garimpeiro:{ out:"Garimpo · ângulos virais",
+    sys:`VOCÊ É O GARIMPEIRO. Explode UMA ideia em muitos ângulos VIRAIS. Lente SOCIAL-FIRST: pense em como a mídia espalha (gancho nos 2s, retenção, tendência, formato, salvamento), NÃO em como a ODuo funciona.
+Extraia o núcleo da ideia e varra os Veios de Viralidade: Confronto, Utilidade salvável, História, Identidade/tribo, Número/choque, Polêmica de setor, Lista, Antes/depois, Trend-jack, POV.
+Saída: uma TABELA markdown | # | Veio | Gancho | Mecanismo viral | Formato | Bandeira | ranqueada por potencial de alcance. Bandeira = 🟢 alinhado / 🟡 ajustável ou a verificar / 🔴 conflita com a marca — NÃO descarte os 🔴. Feche com "Top 3 recomendados" e para onde mandar cada um (Cartógrafo ou Forja). Não publique nada.
+Gere a QUANTIDADE pedida (ex.: 20 ou 50+). Mantenha relevância para o dono de locadora — viral genérico não conta.`}
+};
+
+const OUT_RULE = `\n\nRESPONDA SEMPRE em português do Brasil, em MARKDOWN, no formato de saída desta ferramenta, adaptado à fase ativa. Se faltar dado ou fonte, marque "a verificar" e pergunte — não invente.`;
+
+function buildSystem(tool, phase){
+  return TOOLS[tool].sys + "\n\n" + PHASES[phase] + "\n\n" + BRAND + OUT_RULE;
+}
+
+/* ============================ PROVEDORES ============================ */
+const PROVIDERS = {
+  anthropic:{ name:"Anthropic (Claude)", needsBase:false,
+    hint:'Pegue em <b>console.anthropic.com → API Keys</b>.',
+    placeholder:"sk-ant-...",
+    models:["claude-sonnet-4-6","claude-opus-4-8","claude-haiku-4-5-20251001"] },
+  openai:{ name:"OpenAI (GPT)", needsBase:false,
+    hint:'Pegue em <b>platform.openai.com → API Keys</b>.',
+    placeholder:"sk-...",
+    models:["gpt-4o","gpt-4o-mini","o4-mini"] },
+  google:{ name:"Google (Gemini)", needsBase:false,
+    hint:'Pegue em <b>aistudio.google.com → Get API key</b>.',
+    placeholder:"AIza...",
+    models:["gemini-2.5-pro","gemini-2.5-flash","gemini-2.0-flash"] },
+  compativel:{ name:"Compatível com OpenAI", needsBase:true, defaultBase:"https://openrouter.ai/api/v1",
+    hint:'Qualquer endpoint estilo OpenAI: <b>OpenRouter, Groq, Together, LM Studio/Ollama local</b>. Informe a Base URL e a chave do provedor.',
+    placeholder:"chave do provedor",
+    models:["openai/gpt-4o","anthropic/claude-sonnet-4-6","meta-llama/llama-3.3-70b-instruct"] }
+};
+
+/* ============================ ESTADO / UI ============================ */
+const $ = s=>document.querySelector(s);
+const els = {
+  phase:$("#phase"), tool:$("#tool"), provider:$("#provider"), model:$("#model"),
+  modellist:$("#modellist"), prompt:$("#prompt"), output:$("#output"), focusBar:$("#focusBar"),
+  counter:$("#counter"), genstatus:$("#genstatus"), genBtn:$("#genBtn"),
+  keydot:$("#keydot"), keytext:$("#keytext"), toolLabelL:$("#toolLabelL"), toolLabelR:$("#toolLabelR")
+};
+const FOCUS = {
+  "1":"Foco: topo puro · CTA frio · Gestão/Mercado/Institucional(leve) · KPI alcance/salvamentos",
+  "2":"Foco: expansão · CTA morno · Mercado/Gestão/Vendas/Tecnologia · KPI seguidores qualif./custo-MQL",
+  "3":"Foco: conversão (mantendo 70% topo) · CTA quente (Diagnóstico) · +Provas/+Oferta · KPI conversas iniciadas"
+};
+
+function lsGet(k,d){ try{return localStorage.getItem(k) ?? d}catch(e){return d} }
+function lsSet(k,v){ try{localStorage.setItem(k,v)}catch(e){} }
+function keyName(p){ return "oduo_key_"+p }
+function modelName(p){ return "oduo_model_"+p }
+
+function currentKey(){ return lsGet(keyName(els.provider.value),"") }
+function currentBase(){ return lsGet("oduo_base_compativel", PROVIDERS.compativel.defaultBase) }
+
+function populateModels(){
+  const p = PROVIDERS[els.provider.value];
+  els.modellist.innerHTML = p.models.map(m=>'<option value="'+m+'">').join("");
+  els.model.value = lsGet(modelName(els.provider.value), p.models[0]);
+}
+function refreshLabels(){
+  const t = els.tool.value;
+  els.toolLabelL.textContent = "· " + t.charAt(0).toUpperCase()+t.slice(1);
+  els.toolLabelR.textContent = "· " + TOOLS[t].out;
+  els.focusBar.innerHTML = "<b>Fase "+els.phase.value+"</b> — " + FOCUS[els.phase.value];
+}
+function refreshKey(){
+  const k = currentKey();
+  els.keydot.className = "dot" + (k?" ok":"");
+  els.keytext.textContent = k ? (PROVIDERS[els.provider.value].name+" ✓") : "sem chave";
+}
+function persist(){
+  lsSet("oduo_phase",els.phase.value); lsSet("oduo_tool",els.tool.value);
+  lsSet("oduo_provider",els.provider.value); lsSet(modelName(els.provider.value),els.model.value);
+  lsSet("oduo_draft",els.prompt.value);
+}
+
+/* ============================ GERAÇÃO (multi-provedor) ============================ */
+async function callAnthropic(key, model, system, prompt){
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{ "content-type":"application/json", "x-api-key":key,
+      "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+    body: JSON.stringify({ model, max_tokens:8000, system, messages:[{role:"user",content:prompt}] })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error((data.error&&data.error.message)||("Erro "+res.status));
+  return { text:(data.content||[]).map(b=>b.text||"").join(""), tokens:(data.usage||{}).output_tokens };
+}
+async function callOpenAICompat(base, key, model, system, prompt){
+  const res = await fetch(base.replace(/\/$/,"")+"/chat/completions",{
+    method:"POST",
+    headers:{ "content-type":"application/json", "Authorization":"Bearer "+key },
+    body: JSON.stringify({ model, max_tokens:8000,
+      messages:[{role:"system",content:system},{role:"user",content:prompt}] })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error((data.error&&data.error.message)||("Erro "+res.status));
+  return { text:(((data.choices||[])[0]||{}).message||{}).content||"", tokens:((data.usage||{}).completion_tokens) };
+}
+async function callGoogle(key, model, system, prompt){
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(key);
+  const res = await fetch(url,{
+    method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify({
+      systemInstruction:{parts:[{text:system}]},
+      contents:[{role:"user",parts:[{text:prompt}]}],
+      generationConfig:{maxOutputTokens:8000}
+    })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error((data.error&&data.error.message)||("Erro "+res.status));
+  const cand = (data.candidates||[])[0]||{};
+  return { text:((cand.content||{}).parts||[]).map(p=>p.text||"").join(""), tokens:(data.usageMetadata||{}).candidatesTokenCount };
+}
+
+async function generate(){
+  const provider = els.provider.value;
+  const key = currentKey();
+  if(!key){ openModal(); return; }
+  const prompt = els.prompt.value.trim();
+  if(!prompt){ els.prompt.focus(); return; }
+  const model = els.model.value.trim();
+  const system = buildSystem(els.tool.value, els.phase.value);
+
+  els.genBtn.disabled = true;
+  els.genstatus.className = "status";
+  els.genstatus.textContent = "Gerando…";
+  els.output.innerHTML = '<div class="placeholder">Gerando resposta…</div>';
+
+  try{
+    let r;
+    if(provider==="anthropic") r = await callAnthropic(key, model, system, prompt);
+    else if(provider==="google") r = await callGoogle(key, model, system, prompt);
+    else if(provider==="compativel") r = await callOpenAICompat(currentBase(), key, model, system, prompt);
+    else r = await callOpenAICompat("https://api.openai.com/v1", key, model, system, prompt);
+
+    window._lastMd = r.text;
+    els.output.innerHTML = renderMd(r.text || "_(resposta vazia)_");
+    els.genstatus.className = "status ok";
+    els.genstatus.textContent = "pronto" + (r.tokens? " · "+r.tokens+" tokens" : "");
+  }catch(err){
+    els.output.innerHTML = '<div class="placeholder">⚠ '+escapeHtml(err.message)+'</div>';
+    els.genstatus.className = "status err";
+    els.genstatus.textContent = "falhou";
+  }finally{
+    els.genBtn.disabled = false;
+  }
+}
+
+function renderMd(md){ return (window.marked&&marked.parse)? marked.parse(md) : "<pre>"+escapeHtml(md)+"</pre>"; }
+function escapeHtml(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+/* ============================ MODAL ============================ */
+function openModal(){
+  const p = PROVIDERS[els.provider.value];
+  $("#modalTitle").textContent = "Chave — " + p.name;
+  $("#keyhint").innerHTML = p.hint;
+  $("#apikey").value = currentKey();
+  $("#apikey").placeholder = p.placeholder;
+  $("#baseRow").style.display = p.needsBase ? "block" : "none";
+  $("#baseurl").value = currentBase();
+  $("#modalBg").style.display="flex"; $("#apikey").focus();
+}
+function closeModal(){ $("#modalBg").style.display="none"; }
+
+/* ============================ LISTENERS ============================ */
+els.prompt.addEventListener("input", ()=>{ els.counter.textContent = els.prompt.value.length+" caracteres"; persist(); });
+els.phase.addEventListener("change", ()=>{ refreshLabels(); persist(); });
+els.tool.addEventListener("change", ()=>{ refreshLabels(); persist(); });
+els.provider.addEventListener("change", ()=>{ populateModels(); refreshKey(); persist(); });
+els.model.addEventListener("change", persist);
+els.genBtn.addEventListener("click", generate);
+document.addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") generate(); });
+$("#settingsBtn").addEventListener("click", openModal);
+$("#closeModal").addEventListener("click", closeModal);
+$("#saveKey").addEventListener("click", ()=>{
+  const p = els.provider.value;
+  lsSet(keyName(p), $("#apikey").value.trim());
+  if(PROVIDERS[p].needsBase) lsSet("oduo_base_compativel", $("#baseurl").value.trim()||PROVIDERS.compativel.defaultBase);
+  refreshKey(); closeModal();
+});
+$("#clearKey").addEventListener("click", ()=>{ lsSet(keyName(els.provider.value),""); $("#apikey").value=""; refreshKey(); });
+$("#copyBtn").addEventListener("click", ()=>{ if(window._lastMd) navigator.clipboard.writeText(window._lastMd); });
+$("#saveBtn").addEventListener("click", ()=>{
+  if(!window._lastMd) return;
+  const blob = new Blob([window._lastMd],{type:"text/markdown"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = els.tool.value+"-fase"+els.phase.value+".md";
+  a.click();
+});
+
+/* ============================ INIT ============================ */
+(function init(){
+  els.phase.value = lsGet("oduo_phase","1");
+  els.tool.value  = lsGet("oduo_tool","forja");
+  els.provider.value = lsGet("oduo_provider","anthropic");
+  populateModels();
+  els.prompt.value = lsGet("oduo_draft","");
+  els.counter.textContent = els.prompt.value.length+" caracteres";
+  refreshLabels(); refreshKey();
+})();
+</script>
+</body>
+</html>

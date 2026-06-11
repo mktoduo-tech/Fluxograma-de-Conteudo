@@ -1,0 +1,23 @@
+{
+  "// ODuo Studio — ajustes para escrever conteúdo confortavelmente": "",
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": false,
+  "editor.lineNumbers": "off",
+  "editor.renderWhitespace": "none",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "workbench.startupEditor": "readme",
+  "markdown.preview.fontSize": 15,
+  "markdown.preview.lineHeight": 1.7,
+  "markdown.preview.breaks": true,
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": false
+    },
+    "editor.suggest.showSnippets": true,
+    "editor.unicodeHighlight.ambiguousCharacters": false
+  }
+}
