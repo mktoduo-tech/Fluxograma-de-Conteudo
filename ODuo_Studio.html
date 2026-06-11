@@ -81,7 +81,8 @@
       <option value="anthropic">Anthropic · Claude</option>
       <option value="openai">OpenAI · GPT</option>
       <option value="google">Google · Gemini</option>
-      <option value="compativel">Compatível · OpenRouter/local</option>
+      <option value="ollama">Ollama · local/cloud</option>
+      <option value="compativel">Compatível · OpenRouter</option>
     </select>
   </label>
   <label class="field">Modelo
@@ -199,21 +200,25 @@ function buildSystem(tool, phase){
 
 /* ============================ PROVEDORES ============================ */
 const PROVIDERS = {
-  anthropic:{ name:"Anthropic (Claude)", needsBase:false,
+  anthropic:{ name:"Anthropic (Claude)", needsBase:false, needsKey:true,
     hint:'Pegue em <b>console.anthropic.com → API Keys</b>.',
     placeholder:"sk-ant-...",
     models:["claude-sonnet-4-6","claude-opus-4-8","claude-haiku-4-5-20251001"] },
-  openai:{ name:"OpenAI (GPT)", needsBase:false,
+  openai:{ name:"OpenAI (GPT)", needsBase:false, needsKey:true,
     hint:'Pegue em <b>platform.openai.com → API Keys</b>.',
     placeholder:"sk-...",
     models:["gpt-4o","gpt-4o-mini","o4-mini"] },
-  google:{ name:"Google (Gemini)", needsBase:false,
+  google:{ name:"Google (Gemini)", needsBase:false, needsKey:true,
     hint:'Pegue em <b>aistudio.google.com → Get API key</b>.',
     placeholder:"AIza...",
     models:["gemini-2.5-pro","gemini-2.5-flash","gemini-2.0-flash"] },
-  compativel:{ name:"Compatível com OpenAI", needsBase:true, defaultBase:"https://openrouter.ai/api/v1",
-    hint:'Qualquer endpoint estilo OpenAI: <b>OpenRouter, Groq, Together, LM Studio/Ollama local</b>. Informe a Base URL e a chave do provedor.',
-    placeholder:"chave do provedor",
+  ollama:{ name:"Ollama (local/cloud)", needsBase:true, needsKey:false, defaultBase:"http://localhost:11434/v1",
+    hint:'<b>Local:</b> rode <code>ollama serve</code> e mantenha a Base URL padrão (sem chave). <b>Cloud:</b> crie a chave em <b>ollama.com → Settings → API keys</b> e troque a Base URL para <code>https://ollama.com/v1</code>.',
+    placeholder:"(local: deixe vazio · cloud: cole a chave)",
+    models:["llama3.2","qwen2.5","gpt-oss:20b","gpt-oss:120b","deepseek-r1"] },
+  compativel:{ name:"Compatível com OpenAI", needsBase:true, needsKey:false, defaultBase:"https://openrouter.ai/api/v1",
+    hint:'Qualquer endpoint estilo OpenAI: <b>OpenRouter, Groq, Together, LM Studio</b>. Informe a Base URL e a chave (se o provedor exigir).',
+    placeholder:"chave do provedor (se houver)",
     models:["openai/gpt-4o","anthropic/claude-sonnet-4-6","meta-llama/llama-3.3-70b-instruct"] }
 };
 
@@ -237,7 +242,8 @@ function keyName(p){ return "oduo_key_"+p }
 function modelName(p){ return "oduo_model_"+p }
 
 function currentKey(){ return lsGet(keyName(els.provider.value),"") }
-function currentBase(){ return lsGet("oduo_base_compativel", PROVIDERS.compativel.defaultBase) }
+function baseName(p){ return "oduo_base_"+p }
+function currentBase(){ const p=els.provider.value; return lsGet(baseName(p), PROVIDERS[p].defaultBase||"") }
 
 function populateModels(){
   const p = PROVIDERS[els.provider.value];
@@ -251,9 +257,9 @@ function refreshLabels(){
   els.focusBar.innerHTML = "<b>Fase "+els.phase.value+"</b> — " + FOCUS[els.phase.value];
 }
 function refreshKey(){
-  const k = currentKey();
-  els.keydot.className = "dot" + (k?" ok":"");
-  els.keytext.textContent = k ? (PROVIDERS[els.provider.value].name+" ✓") : "sem chave";
+  const k = currentKey(); const pv = PROVIDERS[els.provider.value];
+  els.keydot.className = "dot" + ((k || !pv.needsKey)?" ok":"");
+  els.keytext.textContent = k ? (pv.name+" ✓") : (pv.needsKey ? "sem chave" : pv.name+" (sem chave)");
 }
 function persist(){
   lsSet("oduo_phase",els.phase.value); lsSet("oduo_tool",els.tool.value);
@@ -274,9 +280,10 @@ async function callAnthropic(key, model, system, prompt){
   return { text:(data.content||[]).map(b=>b.text||"").join(""), tokens:(data.usage||{}).output_tokens };
 }
 async function callOpenAICompat(base, key, model, system, prompt){
+  const headers = { "content-type":"application/json" };
+  if(key) headers["Authorization"] = "Bearer "+key;
   const res = await fetch(base.replace(/\/$/,"")+"/chat/completions",{
-    method:"POST",
-    headers:{ "content-type":"application/json", "Authorization":"Bearer "+key },
+    method:"POST", headers,
     body: JSON.stringify({ model, max_tokens:8000,
       messages:[{role:"system",content:system},{role:"user",content:prompt}] })
   });
@@ -303,7 +310,7 @@ async function callGoogle(key, model, system, prompt){
 async function generate(){
   const provider = els.provider.value;
   const key = currentKey();
-  if(!key){ openModal(); return; }
+  if(!key && PROVIDERS[provider].needsKey){ openModal(); return; }
   const prompt = els.prompt.value.trim();
   if(!prompt){ els.prompt.focus(); return; }
   const model = els.model.value.trim();
@@ -318,7 +325,7 @@ async function generate(){
     let r;
     if(provider==="anthropic") r = await callAnthropic(key, model, system, prompt);
     else if(provider==="google") r = await callGoogle(key, model, system, prompt);
-    else if(provider==="compativel") r = await callOpenAICompat(currentBase(), key, model, system, prompt);
+    else if(provider==="compativel" || provider==="ollama") r = await callOpenAICompat(currentBase(), key, model, system, prompt);
     else r = await callOpenAICompat("https://api.openai.com/v1", key, model, system, prompt);
 
     window._lastMd = r.text;
@@ -363,7 +370,7 @@ $("#closeModal").addEventListener("click", closeModal);
 $("#saveKey").addEventListener("click", ()=>{
   const p = els.provider.value;
   lsSet(keyName(p), $("#apikey").value.trim());
-  if(PROVIDERS[p].needsBase) lsSet("oduo_base_compativel", $("#baseurl").value.trim()||PROVIDERS.compativel.defaultBase);
+  if(PROVIDERS[p].needsBase) lsSet(baseName(p), $("#baseurl").value.trim()||PROVIDERS[p].defaultBase||"");
   refreshKey(); closeModal();
 });
 $("#clearKey").addEventListener("click", ()=>{ lsSet(keyName(els.provider.value),""); $("#apikey").value=""; refreshKey(); });
